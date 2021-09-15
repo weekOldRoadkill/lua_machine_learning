@@ -4,6 +4,12 @@ local neural_net = {}
 
 
 
+-- Imports
+local activ = require("ml.activ")
+
+
+
+
 -- Neural Net Class
 neural_net.in_size = 0x00
 neural_net.out_size = 0x00
@@ -14,22 +20,15 @@ neural_net.hidden_count = 0x00
 neural_net.biases = {}
 neural_net.weights = {}
 
+neural_net.func = activ.linear
+
 neural_net.__index = neural_net
 
 
 
 
--- Neural Net Activation Functions
-neural_net.activ = {}
-neural_net.activ.tanh = math.tanh
-function neural_net.activ.linear(x) return x end
-function neural_net.activ.expit(x) return 0x01/(0x01+math.exp(-x)) end
-
-
-
-
 -- Neural Net Constructor Function
-function neural_net.new(in_size, out_size, hidden_size, hidden_count, random_values)
+function neural_net.new(in_size, out_size, hidden_size, hidden_count, random_values, func)
 
 
     -- Argument Checking
@@ -42,6 +41,7 @@ function neural_net.new(in_size, out_size, hidden_size, hidden_count, random_val
     assert(type(hidden_count) == "number", "\"hidden_count\" is of wrong type")
     assert(hidden_count >= 0x01, "\"hidden_count\" is of invalid value")
     assert(type(random_values) == "boolean", "\"random_values\" is of wrong type")
+    assert(type(func) == "function", "\"func\" is of wrong type")
 
 
     -- Initialization
@@ -52,6 +52,8 @@ function neural_net.new(in_size, out_size, hidden_size, hidden_count, random_val
 
     new.hidden_size = hidden_size
     new.hidden_count = hidden_count
+
+    new.func = func
 
 
     -- Biases
@@ -85,14 +87,13 @@ end
 
 
 -- Neural Net Run Function
-function neural_net.run(self, input, func)
+function neural_net.run(self, input)
     
 
     -- Argument Checking
     assert(getmetatable(self) == neural_net, "\"self\" is of wrong type")
     assert(type(input) == "table", "\"input\" is of wrong type")
     assert(#input == self.in_size, "\"input\" is of wrong length")
-    assert(type(func) == "function", "\"func\" is of wrong type")
 
 
     -- Initialization
@@ -114,7 +115,7 @@ function neural_net.run(self, input, func)
             weight_count = weight_count+0x01
         end
 
-        hidden[0x01][i] = func(hidden[0x01][i])
+        hidden[0x01][i] = self.func(hidden[0x01][i])
     end
 
 
@@ -131,7 +132,7 @@ function neural_net.run(self, input, func)
                 weight_count = weight_count+0x01
             end
 
-            hidden[i][j] = func(hidden[i][j])
+            hidden[i][j] = self.func(hidden[i][j])
         end
     end
 
@@ -146,7 +147,7 @@ function neural_net.run(self, input, func)
             weight_count = weight_count+0x01
         end
 
-        output[i] = func(output[i])
+        output[i] = self.func(output[i])
     end
 
 
@@ -175,27 +176,26 @@ function neural_net.copy(self, mut_chance, mut_amount)
         self.out_size,
         self.hidden_size,
         self.hidden_count,
-        false
+        false,
+        self.func
     )
 
 
     -- Bias Copying
-    for i = 0x01, #self.biases do
-        new.biases[i] = self.biases[i]
+    for i = 0x01, #self.biases do new.biases[i] = self.biases[i] end
 
-        if math.random() < mut_chance then
-            new.biases[i] = new.biases[i]+(math.random()*0x02-0x01)*mut_amount
-        end
+    for i = 0x01, mut_chance*#new.biases do
+        local j = math.random(#new.biases)
+        new.biases[j] = new.biases[j]+(math.random()*0x02-0x01)*mut_amount
     end
 
 
     -- Weight Copying
-    for i = 0x01, #self.weights do
-        new.weights[i] = self.weights[i]
+    for i = 0x01, #self.weights do new.weights[i] = self.weights[i] end
 
-        if math.random() < mut_chance then
-            new.weights[i] = new.weights[i]+(math.random()*0x02-0x01)*mut_amount
-        end
+    for i = 0x01, mut_chance*#new.weights do
+        local j = math.random(#new.weights)
+        new.weights[j] = new.weights[j]+(math.random()*0x02-0x01)*mut_amount
     end
 
 

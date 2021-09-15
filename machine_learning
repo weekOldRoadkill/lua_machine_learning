@@ -4,7 +4,8 @@
 
 
 -- Imports
-local neural_net = require("neural_net")
+package.path = package.path..";./?/init.lua"
+local ml = require("ml")
 
 
 
@@ -13,13 +14,23 @@ local neural_net = require("neural_net")
 math.randomseed(os.time())
 
 local nets = {}
-for i = 0x01, 0x0400 do nets[i] = neural_net.new(0x02, 0x01, 0x04, 0x02, false) end
+
+for i = 0x01, 0x0400 do nets[i] = ml.neural_net.new(
+    0x02,
+    0x01,
+    0x04,
+    0x02,
+    true,
+    ml.activ.expit
+) end
 
 
 
 
 -- Machine Learning
-for i = 0x01, 0x0800 do
+local i = 0x01
+local fitness = 0.0
+while fitness < 0x0C do
 
 
     -- Generation Generation
@@ -34,7 +45,7 @@ for i = 0x01, 0x0800 do
         for k = 0x01, 0x20 do
             local input = {math.random()/0x02, math.random()/0x02}
             local output = {input[0x01]^0x02+input[0x02]^0x02}
-            local result = nets[j]:run(input, neural_net.activ.expit)
+            local result = nets[j]:run(input)
 
             for l = 0x01, #result do
                 fitnesses[j] = fitnesses[j]+math.abs(result[l]-output[l])
@@ -57,7 +68,9 @@ for i = 0x01, 0x0800 do
 
 
     -- Output
-    io.write(i) io.write(" ") io.write(fitnesses[0x01]) io.write("\r") io.flush()
+    fitness = fitnesses[0x01]
+    io.write(i) io.write(" ") io.write(fitness) io.write("\r") io.flush()
+    i = i+0x01
 end
 
 
@@ -67,7 +80,7 @@ end
 for i = 0x01, 0x08 do
     local input = {math.random()/0x02, math.random()/0x02}
     local output = {input[0x01]^0x02+input[0x02]^0x02}
-    local result = nets[0x01]:run(input, neural_net.activ.expit)
+    local result = nets[0x01]:run(input)
 
     print(table.concat(input, " ").." = "..table.concat(output, " "))
     print(table.concat(input, " ").." = "..table.concat(result, " "))
