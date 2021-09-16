@@ -18,8 +18,8 @@ local nets = {}
 for i = 0x01, 0x0400 do nets[i] = ml.neural_net.new(
     0x02,
     0x01,
-    0x02,
-    0x02,
+    0x04,
+    0x01,
     true,
     ml.activ.expit
 ) end

@@ -88,7 +88,7 @@ end
 
 -- Neural Net Run Function
 function neural_net.run(self, input)
-    
+
 
     -- Argument Checking
     assert(getmetatable(self) == neural_net, "\"self\" is of wrong type")
